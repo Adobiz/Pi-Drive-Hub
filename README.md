@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🥧 PI 网盘
+<img src="assets/PI_Drive_Hub.png" width="600">
+    
+# PI 网盘
 
 **干净 · 无广告 · 多网盘桌面客户端**
 
