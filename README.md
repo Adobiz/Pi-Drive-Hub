@@ -4,7 +4,10 @@
     
 # PI 网盘
 
-**干净 · 无广告 · 多网盘桌面客户端**
+**轻量 · 干净 · 无广告 · 多网盘**
+
+[![Version](https://img.shields.io/github/v/release/Adobiz/PI-Drive-Hub?color=blue&label=version)](https://github.com/Adobiz/PI-Drive-Hub/releases)
+[![Size](https://img.shields.io/badge/Size-12M-brightgreen)](https://github.com/Adobiz/PI-Drive-Hub/releases/latest)
 
 一个用 Flutter 构建的 Windows 桌面网盘客户端，以**官方客户端接口**接入多个网盘，
 提供干净的界面、无广告打扰、无多余图标，支持官方登录页扫码/账密登录、全目录操作。
@@ -27,9 +30,9 @@
 
 | 网盘 | 登录方式 | 说明 |
 |------|---------|------|
-| 百度网盘 | 官方登录页（扫码/账密） | 客户端协议，任意目录，SVIP 自动并发 |
-| 夸克网盘 | 官方登录页（扫码） | 客户端协议，OSS 分片上传 |
-| 123云盘 | 账号密码 | 客户端协议，S3 上传 |
+| 百度网盘 | 官方登录页（扫码/账密） | 客户端协议，任意目录，支持SVIP|
+| 夸克网盘 | 官方登录页（扫码/账密） | 客户端协议，OSS 分片上传，支持SVIP|
+| 123云盘 | 账号密码 | 客户端协议，S3 上传，支持SVIP |
 
 > 注：各网盘均通过**非官方客户端协议**接入（逆向自开源项目如 BaiduPCS-Go、alist），
 > 仅用于个人学习与技术交流，请遵守各网盘服务条款。
