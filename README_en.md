@@ -9,6 +9,8 @@
 [![Version](https://img.shields.io/github/v/release/Adobiz/PI-Drive-Hub?color=blue&label=version)](https://github.com/Adobiz/PI-Drive-Hub/releases)
 [![Size](https://img.shields.io/badge/Size-12M-brightgreen)](https://github.com/Adobiz/PI-Drive-Hub/releases/latest)
 
+[中文](README.md)  | English 
+
 A Windows desktop cloud drive client built with Flutter, connecting to multiple cloud drives via **official client protocols**.
 It offers a clean interface, no ad interruptions, no redundant icons, and supports official login pages for QR code / account-password login, with full directory operations.
 
