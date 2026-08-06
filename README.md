@@ -9,6 +9,8 @@
 [![Version](https://img.shields.io/github/v/release/Adobiz/PI-Drive-Hub?color=blue&label=version)](https://github.com/Adobiz/PI-Drive-Hub/releases)
 [![Size](https://img.shields.io/badge/Size-12M-brightgreen)](https://github.com/Adobiz/PI-Drive-Hub/releases/latest)
 
+中文 | [English](README_en.md)  
+
 一个用 Flutter 构建的 Windows 桌面网盘客户端，以**官方客户端接口**接入多个网盘，
 提供干净的界面、无广告打扰、无多余图标，支持官方登录页扫码/账密登录、全目录操作。
 
