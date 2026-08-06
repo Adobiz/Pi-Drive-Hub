@@ -1,0 +1,41 @@
+name: pi_pan
+description: "干净无广告的多网盘客户端（百度网盘 / 夸克网盘 / 123云盘）"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP 客户端（调网盘 API）
+  http: ^1.2.2
+  # token 等敏感信息安全存储（Windows 用 DPAPI 加密）
+  flutter_secure_storage: ^9.2.2
+  # 获取系统本地目录
+  path_provider: ^2.1.4
+  # 本地文件选择（上传/下载目录）
+  file_picker: ^8.1.2
+  # MD5/SHA1（下载签名、分片校验）
+  crypto: ^3.0.6
+  # 官方登录页内嵌（WebView2）
+  flutter_inappwebview: ^6.1.5
+  tray_manager: ^0.5.3
+  window_manager: ^0.5.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/app_icon.ico
+
+# tray_manager 本地 patch：修复 Windows 菜单不自动消失问题
+dependency_overrides:
+  tray_manager:
+    path: windows/tray_manager_local
