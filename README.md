@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/PI_Drive_Hub.png" width="600">
+<img src="assets/PI_Drive_Hub.png" width="200">
     
 # PI 网盘
 
