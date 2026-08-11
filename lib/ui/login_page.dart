@@ -151,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 // 网盘通道选择
                 DropdownButtonFormField<CloudProvider>(
-                  value: _selected,
+                  initialValue: _selected,
                   decoration: InputDecoration(
                     labelText: AppStrings.selectProvider,
                     border: OutlineInputBorder(),
