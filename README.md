@@ -7,7 +7,7 @@
 **轻量 · 干净 · 无广告 · 多网盘**
 
 [![Version](https://img.shields.io/github/v/release/Adobiz/PI-Drive-Hub?color=blue&label=version)](https://github.com/Adobiz/PI-Drive-Hub/releases)
-[![Size](https://img.shields.io/badge/Size-12M-brightgreen)](https://github.com/Adobiz/PI-Drive-Hub/releases/latest)
+[![Size](https://img.shields.io/badge/Size-9M-brightgreen)](https://github.com/Adobiz/PI-Drive-Hub/releases/latest)
 
 中文 | [English](README_en.md)  
 
