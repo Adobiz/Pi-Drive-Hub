@@ -237,108 +237,230 @@ class QuarkApi {
   /// 下载文件到本地（带 cookie/Referer + Range 分片 + 断点续传）
   ///
   /// 夸克下载直链要求：携带会话 cookie + Referer: pan.quark.cn，
-  /// 并按 Range 分片请求（每次 10MB），否则返回 403。
+  /// 并按 Range 分片请求（当前每片 8MB），否则返回 403。
   /// [completedBlocks] 记录已完成分片，续传时跳过。
-  Future<void> download(String fid, String localPath,
-      {void Function(int, int?)? onProgress,
-      bool Function()? isCanceled,
-      Set<int>? completedBlocks,
-      void Function(int, Set<int>)? onBlocks}) async {
-    final url = await getDownloadUrl(fid);
-    final uri = Uri.parse(url);
-    final cookieHeader = auth.cookieJar.headerFor(uri);
+  Future<void> download(
+    String fid,
+    String localPath, {
+    void Function(int, int?)? onProgress,
+    bool Function()? isCanceled,
+    Set<int>? completedBlocks,
+    void Function(int, Set<int>)? onBlocks,
+  }) async {
+    final target = await _resolveDownloadTarget(fid);
+    var uri = target.uri;
     final file = File(localPath);
-    final hasResume = (completedBlocks?.isNotEmpty ?? false);
-    // 有断点时预创建文件（不截断已有数据）
-    if (hasResume && !file.existsSync()) {
+    final doneBlocks = completedBlocks ?? <int>{};
+    if (!file.existsSync()) {
+      // 本地半成品不存在时，内存中的续传记录已无对应数据，必须作废。
+      doneBlocks.clear();
       await file.create(recursive: true);
     }
 
     // 首检：获取文件大小
-    final headReq = http.Request('GET', uri);
-    headReq.headers.addAll({
-      'User-Agent': QuarkConfig.ua,
-      'Referer': '${QuarkConfig.homeBase}/',
-      if (cookieHeader.isNotEmpty) 'Cookie': cookieHeader,
-      'Range': 'bytes=0-0',
-    });
-    final headResp = await http.Response.fromStream(
-      await _client.send(headReq).timeout(const Duration(seconds: 30)),
-    );
-    int? total;
-    if (headResp.statusCode == 200 || headResp.statusCode == 206) {
-      final cr = headResp.headers['content-range'];
-      if (cr != null) {
-        final slash = cr.lastIndexOf('/');
-        if (slash >= 0) total = int.tryParse(cr.substring(slash + 1));
-      }
-    }
+    final total = target.total;
 
-    // 分片下载（1MB/块，小分片让断点续传粒度细，
-    // 暂停时更容易留下已完成分片，避免从头重下）+ 断点续传
-    const chunkSize = 1 * 1024 * 1024;
-    final doneBlocks = completedBlocks ?? <int>{};
+    // 8MB 在断点续传粒度与请求次数之间取平衡。过小的分片会让大文件
+    // 产生数千次请求，更容易触发 CDN 限流或连接重置。
+    const chunkSize = 8 * 1024 * 1024;
+    final blockCount = total == 0 ? 0 : (total + chunkSize - 1) ~/ chunkSize;
+    final existingLength = await file.length();
+    doneBlocks.removeWhere((index) {
+      if (index < 0 || index >= blockCount) return true;
+      final blockEnd = min((index + 1) * chunkSize, total);
+      return blockEnd > existingLength;
+    });
     // 关键：续传时用不截断模式打开（write 会清空已下载数据！），
     // 配合 RandomAccessFile.setPosition 定位写入，保留已完成分片
     final raf = await file.open(
-      mode: doneBlocks.isEmpty ? FileMode.write : FileMode.writeOnlyAppend,
+      mode: doneBlocks.isEmpty ? FileMode.write : FileMode.writeOnly,
     );
-    var received = 0;
+    var received = doneBlocks.fold<int>(0, (sum, index) {
+      final blockStart = index * chunkSize;
+      return sum + min(chunkSize, total - blockStart);
+    });
     var start = 0;
     try {
-      if (total != null) await raf.truncate(total);
+      await raf.truncate(total);
+      onProgress?.call(received, total);
       while (true) {
         if (isCanceled?.call() ?? false) throw QuarkApiException(-3, '下载已取消');
+        if (start >= total) break;
         final blockIndex = start ~/ chunkSize;
         // 跳过已完成分片（断点续传），保留已写入数据
         if (doneBlocks.contains(blockIndex)) {
           start += chunkSize;
-          received = start > (total ?? 0) ? (total ?? 0) : start;
-          onProgress?.call(received, total);
-          if (total != null && start >= total) break;
           continue;
         }
-        final end = (total != null && start + chunkSize - 1 < total)
-            ? start + chunkSize - 1
-            : null;
-        final req = http.Request('GET', uri);
-        req.headers.addAll({
-          'User-Agent': QuarkConfig.ua,
-          'Referer': '${QuarkConfig.homeBase}/',
-          if (cookieHeader.isNotEmpty) 'Cookie': cookieHeader,
-          'Range': end != null ? 'bytes=$start-$end' : 'bytes=$start-',
-        });
-        final streamed = await _client
-            .send(req)
-            .timeout(const Duration(seconds: 60));
-        if (streamed.statusCode != 200 && streamed.statusCode != 206) {
-          throw QuarkApiException(streamed.statusCode,
-              '下载分片 HTTP ${streamed.statusCode} @ $start');
-        }
-        // 流式读取：分片内部按数据块实时上报进度 + 定位写入
-        var chunkBytes = 0;
-        await raf.setPosition(start);
-        await for (final chunk in streamed.stream) {
-          if (isCanceled?.call() ?? false) {
-            throw QuarkApiException(-3, '下载已取消');
-          }
-          await raf.writeFrom(chunk);
-          chunkBytes += chunk.length;
-          received += chunk.length;
-          onProgress?.call(received, total);
-        }
-        if (chunkBytes == 0) break;
+        final end = min(start + chunkSize - 1, total - 1);
+        final completedBeforeChunk = received;
+        uri = await _downloadChunkWithRetry(
+          fid: fid,
+          uri: uri,
+          raf: raf,
+          start: start,
+          end: end,
+          completedBeforeChunk: completedBeforeChunk,
+          isCanceled: isCanceled,
+          onProgress: (value) {
+            received = value;
+            onProgress?.call(received, total);
+          },
+        );
         doneBlocks.add(blockIndex);
         onBlocks?.call(received, doneBlocks);
-        if (end == null) break;
-        if (chunkBytes < chunkSize) break;
-        start += chunkSize;
+        start = end + 1;
       }
       await raf.flush();
     } finally {
       await raf.close();
     }
     onProgress?.call(received, total);
+  }
+
+  Map<String, String> _downloadHeaders(Uri uri, String range) {
+    final cookieHeader = auth.cookieJar.headerFor(uri);
+    return {
+      'User-Agent': QuarkConfig.ua,
+      'Referer': '${QuarkConfig.homeBase}/',
+      if (cookieHeader.isNotEmpty) 'Cookie': cookieHeader,
+      'Range': range,
+    };
+  }
+
+  Future<int?> _probeDownloadSize(Uri uri) async {
+    final req = http.Request('GET', uri)
+      ..headers.addAll(_downloadHeaders(uri, 'bytes=0-0'));
+    final resp = await _client.send(req).timeout(const Duration(seconds: 30));
+    try {
+      if (resp.statusCode == 206) {
+        final contentRange = resp.headers['content-range'];
+        final slash = contentRange?.lastIndexOf('/') ?? -1;
+        if (slash >= 0) {
+          return int.tryParse(contentRange!.substring(slash + 1));
+        }
+      }
+      // 少数 CDN 会忽略 Range 并返回 200，此时 Content-Length 是完整文件大小。
+      if (resp.statusCode == 200) return resp.contentLength;
+      throw QuarkApiException(
+        resp.statusCode,
+        '获取下载文件大小失败 HTTP ${resp.statusCode}',
+      );
+    } finally {
+      // 探测只需要响应头。若 CDN 忽略 Range，不能把整个大文件读入内存。
+      final subscription = resp.stream.listen((_) {});
+      await subscription.cancel();
+    }
+  }
+
+  Future<({Uri uri, int total})> _resolveDownloadTarget(String fid) async {
+    const maxAttempts = 4;
+    Object? lastError;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final uri = Uri.parse(await getDownloadUrl(fid));
+        final total = await _probeDownloadSize(uri);
+        if (total == null || total < 0) {
+          throw QuarkApiException(-1, '无法获取下载文件大小');
+        }
+        return (uri: uri, total: total);
+      } catch (e) {
+        lastError = e;
+        if (attempt < maxAttempts) {
+          await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+        }
+      }
+    }
+
+    throw QuarkApiException(-1, '获取下载信息重试 $maxAttempts 次仍失败: $lastError');
+  }
+
+  Future<Uri> _downloadChunkWithRetry({
+    required String fid,
+    required Uri uri,
+    required RandomAccessFile raf,
+    required int start,
+    required int end,
+    required int completedBeforeChunk,
+    required bool Function()? isCanceled,
+    required void Function(int) onProgress,
+  }) async {
+    const maxAttempts = 4;
+    Object? lastError;
+    var currentUri = uri;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (isCanceled?.call() ?? false) {
+        throw QuarkApiException(-3, '下载已取消');
+      }
+      try {
+        if (attempt > 1) {
+          await Future<void>.delayed(
+            Duration(milliseconds: 400 * (attempt - 1)),
+          );
+          if (isCanceled?.call() ?? false) {
+            throw QuarkApiException(-3, '下载已取消');
+          }
+          currentUri = Uri.parse(await getDownloadUrl(fid));
+        }
+        final req = http.Request('GET', currentUri)
+          ..headers.addAll(_downloadHeaders(currentUri, 'bytes=$start-$end'));
+        final resp = await _client
+            .send(req)
+            .timeout(const Duration(seconds: 60));
+        if (resp.statusCode != 206) {
+          await resp.stream.drain<void>();
+          throw QuarkApiException(
+            resp.statusCode,
+            '下载分片 HTTP ${resp.statusCode} @ $start',
+          );
+        }
+        final contentRange = resp.headers['content-range'];
+        final expectedRangePrefix = 'bytes $start-$end/';
+        if (contentRange == null ||
+            !contentRange.toLowerCase().startsWith(expectedRangePrefix)) {
+          await resp.stream.drain<void>();
+          throw QuarkApiException(
+            -1,
+            '分片范围不匹配 @ $start: ${contentRange ?? "缺少 Content-Range"}',
+          );
+        }
+
+        final expectedBytes = end - start + 1;
+        var chunkBytes = 0;
+        await raf.setPosition(start);
+        await for (final chunk in resp.stream.timeout(
+          const Duration(seconds: 60),
+        )) {
+          if (isCanceled?.call() ?? false) {
+            throw QuarkApiException(-3, '下载已取消');
+          }
+          if (chunkBytes + chunk.length > expectedBytes) {
+            throw QuarkApiException(-1, '分片响应超出请求范围 @ $start');
+          }
+          await raf.writeFrom(chunk);
+          chunkBytes += chunk.length;
+          onProgress(completedBeforeChunk + chunkBytes);
+        }
+        if (chunkBytes != expectedBytes) {
+          throw QuarkApiException(
+            -1,
+            '分片数据不完整 @ $start: $chunkBytes/$expectedBytes',
+          );
+        }
+        return currentUri;
+      } catch (e) {
+        if (e is QuarkApiException && e.code == -3) rethrow;
+        lastError = e;
+        onProgress(completedBeforeChunk);
+      }
+    }
+
+    throw QuarkApiException(
+      -1,
+      '下载分片重试 $maxAttempts 次仍失败 @ $start: $lastError',
+    );
   }
 
   // ---------- 上传（阿里云 OSS 分片） ----------
