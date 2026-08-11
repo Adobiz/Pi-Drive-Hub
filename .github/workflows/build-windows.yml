@@ -1,0 +1,103 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Windows ${{ matrix.arch }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2022
+            output_dir: build/windows/x64/runner/Release
+
+          - arch: arm64
+            runner: windows-11-arm
+            output_dir: build/windows/arm64/runner/Release
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.7
+          cache: true
+
+      # Flutter Action 可能先安装 x64 Dart。
+      # ARM64 Runner 上重新获取原生 ARM64 Dart 和 Flutter Engine。
+      - name: Ensure native ARM64 Flutter SDK
+        if: matrix.arch == 'arm64'
+        shell: pwsh
+        run: |
+          Remove-Item `
+            "$env:FLUTTER_ROOT\bin\cache\engine-dart-sdk.stamp" `
+            -Force `
+            -ErrorAction SilentlyContinue
+
+          & "$env:FLUTTER_ROOT\bin\internal\update_dart_sdk.ps1"
+
+          flutter precache --windows
+
+          $dartVersion = dart --version 2>&1
+          Write-Host $dartVersion
+
+          if ($dartVersion -notmatch "windows_arm64") {
+            throw "Expected ARM64 Dart SDK, but got: $dartVersion"
+          }
+
+      - name: Check environment
+        run: flutter doctor -v
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Windows
+        run: flutter build windows --release
+
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          $bundle = "${{ matrix.output_dir }}"
+
+          if (-not (Test-Path "$bundle\pi_pan.exe")) {
+            throw "pi_pan.exe not found in $bundle"
+          }
+
+          Get-ChildItem $bundle
+
+      - name: Create ZIP package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts | Out-Null
+
+          Compress-Archive `
+            -Path "${{ matrix.output_dir }}\*" `
+            -DestinationPath "artifacts\Pi-Drive-Hub-windows-${{ matrix.arch }}.zip" `
+            -Force
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pi-Drive-Hub-windows-${{ matrix.arch }}
+          path: artifacts/Pi-Drive-Hub-windows-${{ matrix.arch }}.zip
+          if-no-files-found: error
