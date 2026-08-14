@@ -78,6 +78,9 @@ lib/
     └── download_page.dart # 传输管理
 ```
 
+## 星标历史
+<img width="800" height="500" alt="image" src="https://github.com/user-attachments/assets/7eb60d11-dac8-4a0b-9be1-976536583380" />
+
 ## 📄 免责声明
 
 本项目仅用于**学习与研究目的**。项目通过非官方协议接入各网盘服务，
