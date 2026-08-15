@@ -1,6 +1,7 @@
 repository,owner,name,stars,previous,delta,status
-Adobiz/DitingVeritas,Adobiz,DitingVeritas,2,,0,new
-Adobiz/LoRA-MT,Adobiz,LoRA-MT,1,,0,new
-Adobiz/Pi-Drive-Hub,Adobiz,Pi-Drive-Hub,36,,0,new
-Adobiz/VibeKeys,Adobiz,VibeKeys,3,,0,new
-SugarCubeConference/CiGA2026GGJ,SugarCubeConference,CiGA2026GGJ,0,,0,new
+Adobiz/Adobiz,Adobiz,Adobiz,0,,0,new
+Adobiz/DitingVeritas,Adobiz,DitingVeritas,2,2,0,active
+Adobiz/LoRA-MT,Adobiz,LoRA-MT,1,1,0,active
+Adobiz/Pi-Drive-Hub,Adobiz,Pi-Drive-Hub,19,36,-17,active
+Adobiz/VibeKeys,Adobiz,VibeKeys,3,3,0,active
+SugarCubeConference/CiGA2026GGJ,SugarCubeConference,CiGA2026GGJ,0,0,0,active
