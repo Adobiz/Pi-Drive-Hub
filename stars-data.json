@@ -2,48 +2,6 @@
   "version": 1,
   "snapshots": [
     {
-      "timestamp": "2026-08-19T00:29:39.649Z",
-      "totalStars": 11,
-      "repos": [
-        {
-          "fullName": "Adobiz/Adobiz",
-          "name": "Adobiz",
-          "owner": "Adobiz",
-          "stars": 0
-        },
-        {
-          "fullName": "Adobiz/DitingVeritas",
-          "name": "DitingVeritas",
-          "owner": "Adobiz",
-          "stars": 2
-        },
-        {
-          "fullName": "Adobiz/LoRA-MT",
-          "name": "LoRA-MT",
-          "owner": "Adobiz",
-          "stars": 1
-        },
-        {
-          "fullName": "Adobiz/Pi-Drive-Hub",
-          "name": "Pi-Drive-Hub",
-          "owner": "Adobiz",
-          "stars": 5
-        },
-        {
-          "fullName": "Adobiz/VibeKeys",
-          "name": "VibeKeys",
-          "owner": "Adobiz",
-          "stars": 3
-        },
-        {
-          "fullName": "SugarCubeConference/CiGA2026GGJ",
-          "name": "CiGA2026GGJ",
-          "owner": "SugarCubeConference",
-          "stars": 0
-        }
-      ]
-    },
-    {
       "timestamp": "2026-08-20T00:29:08.148Z",
       "totalStars": 11,
       "repos": [
@@ -2367,6 +2325,60 @@
     },
     {
       "timestamp": "2026-10-09T03:18:38.634Z",
+      "totalStars": 14,
+      "repos": [
+        {
+          "fullName": "Adobiz/Adobiz",
+          "name": "Adobiz",
+          "owner": "Adobiz",
+          "stars": 0
+        },
+        {
+          "fullName": "Adobiz/DitingVeritas",
+          "name": "DitingVeritas",
+          "owner": "Adobiz",
+          "stars": 2
+        },
+        {
+          "fullName": "Adobiz/LoRA-MT",
+          "name": "LoRA-MT",
+          "owner": "Adobiz",
+          "stars": 1
+        },
+        {
+          "fullName": "Adobiz/nano-cloud",
+          "name": "nano-cloud",
+          "owner": "Adobiz",
+          "stars": 1
+        },
+        {
+          "fullName": "Adobiz/obsidian-mistake-notebook",
+          "name": "obsidian-mistake-notebook",
+          "owner": "Adobiz",
+          "stars": 1
+        },
+        {
+          "fullName": "Adobiz/Pi-Drive-Hub",
+          "name": "Pi-Drive-Hub",
+          "owner": "Adobiz",
+          "stars": 6
+        },
+        {
+          "fullName": "Adobiz/VibeKeys",
+          "name": "VibeKeys",
+          "owner": "Adobiz",
+          "stars": 3
+        },
+        {
+          "fullName": "SugarCubeConference/CiGA2026GGJ",
+          "name": "CiGA2026GGJ",
+          "owner": "SugarCubeConference",
+          "stars": 0
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-10-10T02:58:26.422Z",
       "totalStars": 14,
       "repos": [
         {
