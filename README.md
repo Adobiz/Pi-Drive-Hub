@@ -41,6 +41,13 @@
 
 ## 🚀 快速开始
 
+### 下载与平台选择
+
+| 平台 | 下载与说明 |
+| --- | --- |
+| 🪟 Windows | [下载](https://github.com/Adobiz/Pi-Drive-Hub/releases) |
+| 🍎 macOS | [下载](https://github.com/Adobiz/Pi-Drive-Hub/releases) |
+
 ### 环境要求
 
 - Flutter 3.29+ stable / Dart 3.7+
