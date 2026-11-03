@@ -41,6 +41,14 @@ It offers a clean interface, no ad interruptions, no redundant icons, and suppor
 
 ## 🚀 Quick Start
 
+### Downloads & Platform Selection
+
+| Platform | Downloads & Documentation |
+| --- | --- |
+| 🪟 Windows | [Download](https://github.com/Adobiz/Pi-Drive-Hub/releases)|
+| 🍎 macOS  | [Download](https://github.com/Adobiz/Pi-Drive-Hub/releases)|
+
+
 ### Requirements
 
 - Flutter 3.29+ stable / Dart 3.7+
