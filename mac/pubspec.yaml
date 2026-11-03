@@ -1,0 +1,43 @@
+name: pi_pan
+description: "干净无广告的多网盘客户端（百度网盘 / 夸克网盘 / 123云盘）macOS 版"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP 客户端（调网盘 API）
+  http: ^1.6.0
+  # token 等敏感信息安全存储（macOS 走 Keychain）
+  flutter_secure_storage: ^9.2.2
+  # 获取系统本地目录
+  path_provider: ^2.1.4
+  # 本地文件选择（上传/下载目录）
+  file_picker: ^8.1.2
+  # MD5/SHA1（下载签名、分片校验）
+  crypto: ^3.0.6
+  # 官方登录页内嵌（macOS 用 WKWebView）
+  flutter_inappwebview: ^6.1.5
+  tray_manager: ^0.5.3
+  window_manager: ^0.5.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/app_icon.ico
+    - assets/tray_icon.png
+    - assets/PI_Drive_Hub.png
+
+# tray_manager 本地 fork（与 Windows 版保持一致，保证 Dart API 相同）
+dependency_overrides:
+  tray_manager:
+    path: third_party/tray_manager_local
